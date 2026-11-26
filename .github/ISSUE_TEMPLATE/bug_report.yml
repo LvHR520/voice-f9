@@ -1,0 +1,69 @@
+name: 报告问题
+description: 按 F9 没反应、识别不准、粘贴失败等
+title: "[问题] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前先看一眼 [常见问题](https://github.com/LvHR520/voice-f9#常见问题)，有几个坑在那里已经写了。
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 一句话说清现象，以及你期望的结果
+      placeholder: 按住 F9 说话，松开后没有任何文字出现
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 系统版本
+      description: Win + R 输入 winver 可以看到
+      placeholder: Windows 11 23H2 (22631.4169)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: 引擎
+      description: config.json 里的 engine 字段
+      options:
+        - sensevoice（默认）
+        - whisper
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: 怎么装的
+      options:
+        - 下载的免安装 zip
+        - 源码运行（pip install）
+        - 自己打的包
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: 日志
+      description: 把 voice-f9.log 最后 20 行贴进来。日志在程序目录下
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 已经确认
+      options:
+        - label: 试过 `--selftest 3`，能录到声音（RMS 不是 0.003 那种静音值）
+          required: false
+        - label: 目标窗口不是以管理员权限运行的（或者本工具也是管理员权限）
+          required: false
