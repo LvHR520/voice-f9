@@ -51,7 +51,7 @@ Windows 全局语音输入工具。在任何输入框里——微信、Word、�
 
 ### 方式一：下载即用（推荐）
 
-到 [Releases](https://github.com/LvHR520/voice-f9/releases/latest) 下载 `voice-f9-v0.2.0-win64.zip`（188 MB）：
+到 [Releases](https://github.com/LvHR520/voice-f9/releases/latest) 下载 `voice-f9-win64.zip`（184 MB）：
 
 1. 解压到任意目录
 2. 双击 `start-voice-f9.vbs`（无黑窗口）或 `voice-f9.exe`
@@ -59,9 +59,9 @@ Windows 全局语音输入工具。在任何输入框里——微信、Word、�
 
 不需要 Python，不需要 CUDA，不需要单独下模型。整包 318 MB，模型已内置。
 
-> **国内下载慢的话用镜像**（实测：直连约 26 KB/s，镜像约 300 KB/s，188 MB 大约 10 分钟）：
-> - `https://ghfast.top/https://github.com/LvHR520/voice-f9/releases/download/v0.2.0/voice-f9-v0.2.0-win64.zip`
-> - `https://gh-proxy.com/https://github.com/LvHR520/voice-f9/releases/download/v0.2.0/voice-f9-v0.2.0-win64.zip`
+> **国内下载慢的话用镜像**（实测：直连约 26 KB/s，镜像约 300 KB/s，184 MB 大约 10 分钟）：
+> - `https://ghfast.top/https://github.com/LvHR520/voice-f9/releases/latest/download/voice-f9-win64.zip`
+> - `https://gh-proxy.com/https://github.com/LvHR520/voice-f9/releases/latest/download/voice-f9-win64.zip`
 
 ### 方式二：源码运行
 
