@@ -112,6 +112,7 @@ python bench.py                            # 两个引擎的速度/准确率对�
 |---|---|---|
 | `engine` | `sensevoice` | `sensevoice`（CPU、快、小）或 `whisper`（GPU、英文更准） |
 | `hotkey` | `f9` | 用 `--keytest` 查可用键名（`f8`、`right ctrl`、`pause`…） |
+| `hotkey_backend` | `poll` | 热键实现方式。`poll` 轮询按键状态，最兼容；`hook` 用键盘钩子，延迟更低且能拦截按键（`suppress` 生效） |
 | `mode` | `hold` | `hold` 按住说话；`toggle` 按一下开始、再按一下结束 |
 | `sensevoice_dir` | 空 | 模型目录，留空则用 `models/sensevoice` |
 | `use_itn` | `true` | 数字和标点规整（「十五个」→「15个」） |

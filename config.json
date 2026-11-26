@@ -1,5 +1,6 @@
 {
   "hotkey": "f9",
+  "hotkey_backend": "poll",
   "mode": "hold",
   "quit_hotkey": "ctrl+alt+q",
   "suppress": false,

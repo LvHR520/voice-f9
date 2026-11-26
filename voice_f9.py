@@ -585,6 +585,106 @@ class Overlay:
         self.root.mainloop()
 
 
+# ---------------------------------------------------------------- 热键
+VK_MAP = {
+    "f1": 0x70, "f2": 0x71, "f3": 0x72, "f4": 0x73, "f5": 0x74, "f6": 0x75,
+    "f7": 0x76, "f8": 0x77, "f9": 0x78, "f10": 0x79, "f11": 0x7A, "f12": 0x7B,
+    "pause": 0x13, "scroll lock": 0x91, "caps lock": 0x14, "tab": 0x09, "space": 0x20,
+    "insert": 0x2D, "delete": 0x2E, "home": 0x24, "end": 0x23,
+    "page up": 0x21, "page down": 0x22,
+    "left ctrl": 0xA2, "right ctrl": 0xA3, "left alt": 0xA4, "right alt": 0xA5,
+    "left shift": 0xA0, "right shift": 0xA1,
+    "mouse left": 0x01, "mouse right": 0x02, "mouse middle": 0x04,
+}
+
+
+def vk_of(name: str):
+    """把键名换成虚拟键码；不认识返回 None。"""
+    n = str(name).strip().lower()
+    if n in VK_MAP:
+        return VK_MAP[n]
+    if len(n) == 1 and n.isprintable():
+        return ord(n.upper())
+    return None
+
+
+class PollHotkey:
+    """不装键盘钩子的全局热键：轮询 GetAsyncKeyState。
+
+    为什么需要它：低层键盘钩子（keyboard 库用的那个）在部分环境下收不到
+    任何事件——安全软件拦截、焦点在提权窗口、远程会话等。轮询走的是完全
+    不同的机制，在这些环境里通常仍然可用。
+
+    代价：不能拦截按键（suppress 无效），轮询间隔带来约 20ms 延迟。
+    """
+
+    def __init__(self, hotkey, on_down, on_up, quit_combo=None, on_quit=None, interval=0.02):
+        self.hotkey = hotkey
+        self.on_down = on_down
+        self.on_up = on_up
+        self.quit_combo = quit_combo
+        self.on_quit = on_quit
+        self.interval = interval
+        self._alive = False
+        self._thread = None
+
+    def start(self) -> None:
+        self._alive = True
+        self._thread = threading.Thread(target=self._run, daemon=True, name="poll-hotkey")
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._alive = False
+
+    def _run(self) -> None:
+        try:
+            key_state = ctypes.windll.user32.GetAsyncKeyState
+        except Exception as exc:  # noqa: BLE001
+            log(f"热键轮询启动失败：{exc}")
+            return
+
+        vk = vk_of(self.hotkey)
+        if vk is None:
+            log(f"轮询后端不认识这个键名：{self.hotkey}")
+            return
+
+        quit_vks: list[int] = []
+        if self.quit_combo:
+            quit_vks = [vk_of(p) for p in str(self.quit_combo).split("+")]
+        quit_ok = (
+            self.on_quit is not None
+            and bool(quit_vks)
+            and all(quit_vks)  # type: ignore[arg-type]
+        )
+
+        down = False
+        quit_down = False
+        while self._alive:
+            pressed = bool(key_state(vk) & 0x8000)
+            if pressed and not down:
+                try:
+                    self.on_down()
+                except Exception as exc:  # noqa: BLE001
+                    log(f"热键按下处理出错：{exc}")
+            elif not pressed and down:
+                try:
+                    self.on_up()
+                except Exception as exc:  # noqa: BLE001
+                    log(f"热键松开处理出错：{exc}")
+            down = pressed
+
+            if quit_ok:
+                q = all(bool(key_state(k) & 0x8000) for k in quit_vks)
+                if q and not quit_down:
+                    try:
+                        self.on_quit()
+                    except Exception:  # noqa: BLE001
+                        pass
+                quit_down = q
+
+            time.sleep(self.interval)
+
+
 # ---------------------------------------------------------------- 主程序
 class App:
     def __init__(self, cfg: dict) -> None:
@@ -701,6 +801,41 @@ class App:
                 beep("error", self.cfg)
 
     def install_hooks(self) -> None:
+        backend = str(self.cfg.get("hotkey_backend", "auto")).lower()
+        if backend == "hook":
+            self._install_hook()
+            return
+        try:
+            self._install_poll()
+        except Exception as exc:  # noqa: BLE001
+            log(f"轮询热键启动失败：{exc}，回退到键盘钩子")
+            self._install_hook()
+
+    def _install_poll(self) -> None:
+        hotkey = self.cfg.get("hotkey", "f9")
+        mode = self.cfg.get("mode", "hold")
+        quit_key = self.cfg.get("quit_hotkey")
+        if mode == "hold":
+            on_down, on_up = self.on_press, self.on_release
+        else:
+
+            def on_down() -> None:
+                if not self.recording:
+                    self.on_press()
+                else:
+                    self.on_toggle()
+
+            on_up = lambda: None  # noqa: E731
+        self._poll = PollHotkey(hotkey, on_down, on_up, quit_key, self.shutdown)
+        self._poll.start()
+        if self.cfg.get("suppress"):
+            log("提示：轮询后端无法拦截按键，suppress 不生效")
+        log(
+            f"监听中（轮询）：{'按住' if mode == 'hold' else '按一下'} "
+            f"{hotkey.upper()} 说话，{quit_key} 退出"
+        )
+
+    def _install_hook(self) -> None:
         import keyboard
 
         hotkey = self.cfg.get("hotkey", "f9")
@@ -718,10 +853,16 @@ class App:
         quit_key = self.cfg.get("quit_hotkey")
         if quit_key:
             keyboard.add_hotkey(quit_key, self.shutdown)
-        log(f"监听中：{'按住' if mode == 'hold' else '按一下'} {hotkey.upper()} 说话，{quit_key} 退出")
+        log(f"监听中（钩子）：{'按住' if mode == 'hold' else '按一下'} {hotkey.upper()} 说话，{quit_key} 退出")
 
     def shutdown(self) -> None:
         log("收到退出指令")
+        poll = getattr(self, "_poll", None)
+        if poll is not None:
+            try:
+                poll.stop()
+            except Exception:  # noqa: BLE001
+                pass
         try:
             import keyboard
 

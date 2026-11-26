@@ -43,7 +43,7 @@ python bench.py                                     # 两个引擎都要能加�
 
 - **双引擎**：`config.json` 的 `engine` 决定走哪条分支，`Transcriber._build()` 分发。
 - **模型位置**：`sensevoice_dir` 留空时用 `<程序目录>/models/sensevoice`；打包后 `<程序目录>` 指 exe 所在目录（`BASE` 已按 `sys.frozen` 处理）。
-- **热键**：`keyboard` 库的全局钩子。目标窗口以管理员权限运行时钩子收不到键，这是 Windows UIPI 的限制，不是 bug。
+- **热键**：两套后端，`config.json` 的 `hotkey_backend` 切换。`poll` 轮询 `GetAsyncKeyState`（默认，兼容性最好）；`hook` 用 `keyboard` 库的低层钩子（延迟更低、`suppress` 生效）。**从沙箱化进程启动时两者都读不到按键**——那是输入隔离，测试热键必须由用户双击启动。
 - **打包**：PyInstaller onedir，必须带 `--exclude-module faster_whisper/ctranslate2/av/torch/transformers/tokenizers/onnxruntime`，否则会多收 250 MB。参见 `.github/workflows/build-release.yml`。
 
 ## 已知限制
