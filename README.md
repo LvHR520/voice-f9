@@ -43,6 +43,10 @@ Windows 全局语音输入工具。在任何输入框里——微信、Word、�
 
 不需要 Python，不需要 CUDA，不需要单独下模型。整包 318 MB，模型已内置。
 
+> **国内下载慢的话用镜像**（实测快 4 倍左右）：
+> - `https://ghfast.top/https://github.com/LvHR520/voice-f9/releases/download/v0.2.0/voice-f9-v0.2.0-win64.zip`
+> - `https://gh-proxy.com/https://github.com/LvHR520/voice-f9/releases/download/v0.2.0/voice-f9-v0.2.0-win64.zip`
+
 ### 方式二：源码运行
 
 需要 Python 3.10 或更高版本。
