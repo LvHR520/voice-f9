@@ -33,6 +33,18 @@ Windows 全局语音输入工具。在任何输入框里——微信、Word、�
 
 ## 快速开始
 
+### 方式一：下载即用（推荐）
+
+到 [Releases](https://github.com/LvHR520/voice-f9/releases/latest) 下载 `voice-f9-v0.2.0-win64.zip`（188 MB）：
+
+1. 解压到任意目录
+2. 双击 `start-voice-f9.vbs`（无黑窗口）或 `voice-f9.exe`
+3. 光标点进任意输入框，**按住 F9 说话**
+
+不需要 Python，不需要 CUDA，不需要单独下模型。整包 318 MB，模型已内置。
+
+### 方式二：源码运行
+
 需要 Python 3.10 或更高版本。
 
 ```powershell
@@ -42,11 +54,7 @@ pip install sherpa-onnx sounddevice keyboard numpy
 powershell -ExecutionPolicy Bypass -File download-model.ps1   # 下模型，约 228 MB
 ```
 
-然后双击 `start-voice-f9.vbs`（无黑窗口）。
-
-1. 把光标点进任意输入框
-2. **按住 F9 说话**，松开 → 文字上屏
-3. 退出：`Ctrl + Alt + Q`
+然后双击 `start-voice-f9.vbs`。
 
 开机自启：右键 `install-autostart.ps1` → 用 PowerShell 运行。
 
