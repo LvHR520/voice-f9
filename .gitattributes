@@ -1,0 +1,10 @@
+# 统一换行符
+* text=auto eol=lf
+
+*.ps1  text eol=crlf
+*.vbs  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+*.png binary
+*.ico binary

@@ -1,0 +1,31 @@
+{
+  "hotkey": "f9",
+  "mode": "hold",
+  "quit_hotkey": "ctrl+alt+q",
+  "suppress": false,
+
+  "model": "medium",
+  "device": "auto",
+  "compute_type": "int8_float16",
+  "language": null,
+  "beam_size": 1,
+  "vad_filter": true,
+  "initial_prompt": "以下是普通话的句子，请加上标点符号。",
+  "hotwords": "OpenLess, faster-whisper, config.json, voice-f9, GPU, CUDA, macOS, Windows, structured, GitHub, AI key, 豆包, 抖音, 剪映, 即梦",
+  "fullwidth_punct": true,
+
+  "idle_unload_minutes": 20,
+  "min_seconds": 0.35,
+  "max_seconds": 60,
+  "trim_trailing_punct": true,
+  "strip_fillers": true,
+
+  "polish": false,
+  "polish_model": "deepseek-chat",
+  "polish_timeout": 12,
+
+  "restore_clipboard": false,
+  "beep": true,
+  "overlay": true,
+  "paste_delay_ms": 60
+}
