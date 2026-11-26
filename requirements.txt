@@ -1,19 +1,17 @@
-# 核心依赖
-faster-whisper>=1.2.1
+# 默认引擎：SenseVoice（ONNX，纯 CPU，228 MB 模型，无需 CUDA）
+sherpa-onnx>=2.0.3
 
-# PyAV：faster-whisper 用它解码音视频文件。
-# 必须小于 19：PyAV 19 移除了 av.open() 的 metadata_errors 参数，
-# faster-whisper 1.2.1 仍在传它，装了 19 会直接 TypeError。
-av>=11,<19
-
-# 全局热键与录音
-keyboard>=0.13.5
+# 录音与全局热键
 sounddevice>=0.4.6
+keyboard>=0.13.5
 numpy>=1.24
 
-# GPU 推理（可选）。不装这两行会退回 CPU，速度差一个数量级。
-# 注意：Windows 不会自动搜索 site-packages/nvidia/*/bin，
-# voice_f9.py 启动时会用 os.add_dll_directory 把它们注册进去。
-# 不用 GPU 可以删掉这两行。
-nvidia-cublas-cu12>=12.0
-nvidia-cudnn-cu12>=9.0
+# ---------------------------------------------------------------
+# 可选：faster-whisper 引擎（GPU，英文更准，模型 1.5 GB）
+# 不用就在 config.json 里保持 "engine": "sensevoice"，无需安装下面这些。
+#
+# faster-whisper>=1.2.1
+# av>=11,<19            # 必须 <19：PyAV 19 移除了 metadata_errors 参数
+# nvidia-cublas-cu12>=12.0
+# nvidia-cudnn-cu12>=9.0
+# ---------------------------------------------------------------

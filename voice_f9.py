@@ -313,11 +313,60 @@ class Recorder:
 
 
 # ---------------------------------------------------------------- 转写
+def load_audio_16k(path) -> "object":
+    """把音频文件读成 16k 单声道 float32 数组。
+
+    wav 用标准库解码（不依赖第三方包）；其他格式回退到 av。
+    """
+    import numpy as np
+
+    p = Path(path)
+    if p.suffix.lower() == ".wav":
+        import wave
+
+        with wave.open(str(p), "rb") as w:
+            sr = w.getframerate()
+            ch = w.getnchannels()
+            width = w.getsampwidth()
+            raw = w.readframes(w.getnframes())
+        if width == 2:
+            data = np.frombuffer(raw, dtype="<i2").astype("float32") / 32768.0
+        elif width == 4:
+            data = np.frombuffer(raw, dtype="<i4").astype("float32") / 2147483648.0
+        else:
+            u = np.frombuffer(raw, dtype="u1").astype("float32")
+            data = (u - 128.0) / 128.0
+        if ch > 1:
+            data = data.reshape(-1, ch).mean(axis=1)
+        if sr != 16000 and data.size:
+            n = int(round(data.size * 16000 / sr))
+            data = np.interp(np.linspace(0, data.size - 1, n), np.arange(data.size), data)
+        return data.astype("float32")
+
+    try:
+        import av
+    except ImportError:
+        raise SystemExit(f"解不了 {p.suffix}，请先转成 wav（或安装 av）")
+    parts = []
+    with av.open(str(p)) as c:
+        stream = c.streams.audio[0]
+        res = av.audio.resampler.AudioResampler(format="flt", layout="mono", rate=16000)
+        for frame in c.decode(stream):
+            for f in res.resample(frame):
+                parts.append(f.to_ndarray().reshape(-1))
+        for f in res.resample(None):
+            parts.append(f.to_ndarray().reshape(-1))
+    if not parts:
+        return np.zeros(0, dtype="float32")
+    return np.concatenate(parts).astype("float32")
+
+
 class Transcriber:
     """常驻模型；按需加载，支持空闲后卸载显存。"""
 
     def __init__(self, cfg: dict) -> None:
         self.cfg = cfg
+        self.engine = str(cfg.get("engine", "sensevoice")).lower()
         self.model = None
         self.device = "?"
         self.ready = threading.Event()
@@ -326,6 +375,47 @@ class Transcriber:
         self._load_lock = threading.Lock()
 
     def _build(self) -> bool:
+        if self.engine == "sensevoice":
+            return self._build_sensevoice()
+        return self._build_whisper()
+
+    def _build_sensevoice(self) -> bool:
+        """SenseVoice via sherpa-onnx：纯 CPU，160 MB 模型，无需 CUDA。"""
+        cfg = self.cfg
+        model_dir = Path(cfg.get("sensevoice_dir") or (BASE / "models" / "sensevoice"))
+        model_file = model_dir / "model.int8.onnx"
+        tokens = model_dir / "tokens.txt"
+        if not model_file.is_file() or not tokens.is_file():
+            self.error = f"SenseVoice 模型缺失：{model_dir}"
+            log(self.error)
+            return False
+        try:
+            import numpy as np
+            import sherpa_onnx
+
+            t0 = time.time()
+            recognizer = sherpa_onnx.OfflineRecognizer.from_sense_voice(
+                model=str(model_file),
+                tokens=str(tokens),
+                num_threads=int(cfg.get("sensevoice_threads", 2)),
+                use_itn=bool(cfg.get("use_itn", True)),
+                language=str(cfg.get("sensevoice_language", "auto")),
+                debug=False,
+            )
+            # 探针：真解一段静音，确认运行期不炸
+            probe = recognizer.create_stream()
+            probe.accept_waveform(16000, np.zeros(16000, dtype="float32"))
+            recognizer.decode_stream(probe)
+            self.model = recognizer
+            self.device = "cpu/sensevoice"
+            log(f"SenseVoice 就绪：{self.device}，加载 {time.time()-t0:.1f}s（{model_dir}）")
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.error = f"SenseVoice 加载失败：{type(exc).__name__}: {str(exc)[:160]}"
+            log(self.error)
+            return False
+
+    def _build_whisper(self) -> bool:
         cfg = self.cfg
         device = cfg.get("device", "auto")
         compute = cfg.get("compute_type", "int8_float16")
@@ -391,6 +481,13 @@ class Transcriber:
         if not self.ensure():
             return ""
         self.last_use = time.time()
+        if self.engine == "sensevoice":
+            if isinstance(audio, (str, Path)):
+                audio = load_audio_16k(audio)
+            stream = self.model.create_stream()
+            stream.accept_waveform(16000, audio)
+            self.model.decode_stream(stream)
+            return (stream.result.text or "").strip()
         segments, _info = self.model.transcribe(
             audio,
             language=cfg.get("language") or None,

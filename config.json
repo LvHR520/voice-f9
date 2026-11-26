@@ -4,6 +4,12 @@
   "quit_hotkey": "ctrl+alt+q",
   "suppress": false,
 
+  "engine": "sensevoice",
+  "sensevoice_dir": "",
+  "sensevoice_threads": 2,
+  "sensevoice_language": "auto",
+  "use_itn": true,
+
   "model": "medium",
   "device": "auto",
   "compute_type": "int8_float16",
