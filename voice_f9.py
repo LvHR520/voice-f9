@@ -28,7 +28,11 @@ import time
 import urllib.request
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent
+if getattr(sys, "frozen", False):
+    # 打包后（PyInstaller）程序本体在 _internal 里，配置和模型要跟着 exe 走
+    BASE = Path(sys.executable).resolve().parent
+else:
+    BASE = Path(__file__).resolve().parent
 CONFIG_PATH = BASE / "config.json"
 LOG_PATH = BASE / "voice-f9.log"
 CREDENTIALS = Path.home() / ".dsh" / ".credentials.yaml"
@@ -423,7 +427,12 @@ class Transcriber:
         if device in ("auto", "cuda"):
             attempts += [("cuda", compute), ("cuda", "float16")]
         attempts += [("cpu", "int8")]
-        from faster_whisper import WhisperModel
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError:
+            self.error = "没装 faster-whisper，无法使用 whisper 引擎（改用 engine=sensevoice）"
+            log(self.error)
+            return False
 
         for dev, ct in attempts:
             try:
