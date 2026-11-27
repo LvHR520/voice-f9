@@ -215,6 +215,17 @@ if ($Kind -ne 'profile') {
     $hasImage = $headText -match '!\[[^\]]*\]\([^)]+\)'
     $hasStart = $headText -match '(?m)^#{1,4}\s*(快速开始|快速上手|三步上手|安装|Quick\s*[Ss]tart|Getting\s*[Ss]tarted|Install|Usage)'
 
+    # 首屏图片：必须真的存在，不能只是写了个不存在的路径
+    $imgOk = $false
+    $imgMissing = @()
+    foreach ($m in [regex]::Matches($headText, '!\[[^\]]*\]\(([^)]+)\)')) {
+      $src = $m.Groups[1].Value.Trim()
+      if ($src -match '^https?://') { $imgOk = $true; continue }
+      $local = Join-Path $root ($src -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+      if (Test-Path -LiteralPath $local) { $imgOk = $true } else { $imgMissing += $src }
+    }
+    $hasImage = $imgOk
+
     # 快速事实表允许出现在后面，但位置越靠后，被看到的概率越低
     $factsLine = -1
     for ($i = 0; $i -lt $allLines.Count; $i++) {
@@ -235,6 +246,11 @@ if ($Kind -ne 'profile') {
     }
     elseif ($hasImage) {
       Test-Ok 'readme-hero' 'README 首屏' '一句话 + 快速事实 + 快速开始 + 有图'
+    }
+    elseif ($imgMissing.Count -gt 0) {
+      $m2 = ('首屏引用了图但文件不存在：{0}' -f ($imgMissing -join '、'))
+      if ($ForRelease) { Test-Fail 'readme-hero' 'README 首屏' $m2 }
+      else { Test-Warn 'readme-hero' 'README 首屏' $m2 }
     }
     else {
       if ($ForRelease) { Test-Fail 'readme-hero' 'README 首屏' '首屏没有图（发版必须有 GIF）' }
