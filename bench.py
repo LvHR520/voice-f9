@@ -1,7 +1,8 @@
 """voice-f9 双引擎对比测试：SenseVoice(CPU) vs faster-whisper(GPU)。
 
 在 voice-f9 目录下运行：
-    python bench.py
+    python bench.py                                   # 用当前目录的 test-speech.wav / test-zh.wav
+    python bench.py 英文.wav 中文.wav                  # 指定文件
 """
 import sys
 import time
@@ -11,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 import voice_f9 as vf
 
 FILES = [
-    ("英文", r"D:\AI工作区\build\test-speech.wav"),
-    ("中文", r"D:\AI工作区\build\test-zh.wav"),
+    ("英文", sys.argv[1] if len(sys.argv) > 1 else "test-speech.wav"),
+    ("中文", sys.argv[2] if len(sys.argv) > 2 else "test-zh.wav"),
 ]
 ENGINES = ["sensevoice", "whisper"]
 RUNS = 3

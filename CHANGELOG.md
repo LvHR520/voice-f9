@@ -2,6 +2,13 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## 未发布
+
+### 变更
+
+- `bench.py` 不再写死本机测试音频路径，改为命令行参数或当前目录的 `test-speech.wav` / `test-zh.wav`。
+- 发布流水线增加「包内脚本必须是 CRLF」校验，解压后逐个文件检查，不是 CRLF 直接失败。
+
 ## [0.2.2] - 2026-11-26
 
 ### 新增

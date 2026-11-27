@@ -66,6 +66,22 @@ jobs:
           Write-Host "包体积: $mb MB"
           (Get-FileHash voice-f9-win64.zip -Algorithm SHA256).Hash | Out-File voice-f9-win64.zip.sha256 -Encoding ascii
 
+      - name: 校验包内脚本换行（v0.2.0 就是栽在这）
+        shell: pwsh
+        run: |
+          $tmp = Join-Path $env:RUNNER_TEMP 'verify'
+          Expand-Archive voice-f9-win64.zip -DestinationPath $tmp
+          $bad = @()
+          Get-ChildItem $tmp -Recurse -Include *.vbs, *.ps1, *.bat | ForEach-Object {
+            $t = [System.IO.File]::ReadAllText($_.FullName)
+            if ($t -notmatch "`r`n") { $bad += $_.Name }
+          }
+          if ($bad.Count -gt 0) {
+            Write-Host "::error::包内这些脚本不是 CRLF，双击会语法错误：$($bad -join ', ')"
+            exit 1
+          }
+          Write-Host '包内脚本换行全部是 CRLF'
+
       - name: 留存产物（手动运行时用）
         uses: actions/upload-artifact@v4
         with:

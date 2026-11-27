@@ -1,0 +1,22 @@
+name: gate
+
+# 发布闸门：和本地跑的是同一份脚本（由 _factory/sync-gate.ps1 生成，勿手改）
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 发布闸门
+        shell: pwsh
+        env:
+          GATE_EXTRA_PATTERNS: ${{ secrets.GATE_EXTRA_PATTERNS }}
+        run: .github/gate.ps1 -RepoPath . -Kind project
