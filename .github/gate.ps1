@@ -259,7 +259,11 @@ if ($Kind -ne 'profile') {
   }
 }
 
-# ---------- 7. 演示物料（必须能自动生成，见规则 8） ----------
+# ---------- 7. 演示物料（必须能自动生成，见规则 8；主页仓库不要求） ----------
+if ($Kind -eq 'profile') {
+  Test-Ok 'demo-gif' '演示物料' '主页仓库不要求演示'
+}
+else {
 $visuals = @($tracked | Where-Object { $_ -match '\.(gif|png|webp|jpg|jpeg)$' })
 $gifs = @($tracked | Where-Object { $_ -match '\.gif$' })
 
@@ -284,11 +288,12 @@ else {
   }
   $totalGif = ($sizes | Measure-Object -Sum).Sum
   if ($totalGif -lt 200KB) {
-    Test-Warn 'demo-gif' '演示 GIF' ('有 {0} 个 GIF，但总共只有 {1}，大概率是坏图或占位图' -f $gifs.Count, (Fmt-Bytes $totalGif))
+    Test-Warn 'demo-gif' '演示物料' ('有 {0} 个 GIF，但总共只有 {1}，大概率是坏图或占位图' -f $gifs.Count, (Fmt-Bytes $totalGif))
   }
   else {
-    Test-Ok 'demo-gif' '演示 GIF' ('{0} 个，共 {1}' -f $gifs.Count, (Fmt-Bytes $totalGif))
+    Test-Ok 'demo-gif' '演示物料' ('{0} 个，共 {1}' -f $gifs.Count, (Fmt-Bytes $totalGif))
   }
+}
 }
 
 # ---------- 8. AGENTS.md 有没有「改完怎么验证」 ----------
