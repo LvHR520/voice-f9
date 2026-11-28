@@ -8,6 +8,7 @@
 
 - `bench.py` 不再写死本机测试音频路径，改为命令行参数或当前目录的 `test-speech.wav` / `test-zh.wav`。
 - 发布流水线增加「包内脚本必须是 CRLF」校验，解压后逐个文件检查，不是 CRLF 直接失败。
+- 新增 `examples/demo.ps1`：用 Windows 中文 TTS 合成语音 + `--file` 转写，生成首屏演示，不再依赖录屏。
 
 ## [0.2.2] - 2026-11-26
 

@@ -259,15 +259,22 @@ if ($Kind -ne 'profile') {
   }
 }
 
-# ---------- 7. 演示物料 ----------
+# ---------- 7. 演示物料（必须能自动生成，见规则 8） ----------
+$visuals = @($tracked | Where-Object { $_ -match '\.(gif|png|webp|jpg|jpeg)$' })
 $gifs = @($tracked | Where-Object { $_ -match '\.gif$' })
-if ($gifs.Count -eq 0) {
+
+if ($visuals.Count -eq 0) {
   if ($ForRelease) {
-    Test-Fail 'demo-gif' '演示 GIF' '仓库里没有 GIF。按规则 8：没有 GIF 不算发布完成'
+    Test-Fail 'demo-gif' '演示物料' '仓库里没有任何视觉资产。规则 8：没有演示不算发布完成'
   }
   else {
-    Test-Warn 'demo-gif' '演示 GIF' '还没有 GIF（推送不拦，发版会拦）'
+    Test-Warn 'demo-gif' '演示物料' '还没有任何图（推送不拦，发版会拦）'
   }
+}
+elseif ($gifs.Count -eq 0) {
+  $msg = ('只有静态图（{0}），没有动图；确认它是真实产物的截图而不是装饰图' -f ($visuals -join '、'))
+  if ($ForRelease) { Test-Warn 'demo-gif' '演示物料' $msg }
+  else { Test-Warn 'demo-gif' '演示物料' $msg }
 }
 else {
   $sizes = @()
